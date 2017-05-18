@@ -1,6 +1,10 @@
 var xmpp = require("node-xmpp");
 var xml2js = require("xml2js");
 var msgCache = require("./messagesCache");
+
+console.log(process.env.API_KEY);
+console.log(process.env.SENDER_ID);
+
 var keys = (process.env.SENDER_ID && process.env.API_KEY) ? null : require("./keys");
 
 var SENDER_ID = process.env.SENDER_ID || keys.SENDER_ID;
