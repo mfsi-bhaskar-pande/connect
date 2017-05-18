@@ -6,6 +6,94 @@ var keys = require("./keys");
 var SENDER_ID = process.env.SENDER_ID || keys.SENDER_ID;
 var API_KEY = process.env.API_KEY || keys.API_KEY;
 
+var AckMessage = {
+    constructor(regId, messageId) {
+        this.to = regId;
+        this.message_id = messageId;
+        this.message_type = "ack"
+        return this;
+    }
+}
+
+var FcmResponseMessage = {
+    constructor(jsonPayload) {
+        /*_ is the xml2js prefix used to access the character content*/
+        var response = JSON.parse(jsonPayload._);
+        this.responseType = response.message_type;
+        this.messageId = response.message_id;
+        return this;
+    },
+
+    serverReceiptPayload(receiverFcmToken, senderUid, receiverUid) {
+
+        return {
+            message_id: this.messageId,
+            data: {
+                messageType: MSG_TYPES_RECEIPT,
+                refMsg: this.messageId,
+                senderUid: senderUid,
+                recipientUid: receiverUid
+            },
+            to: receiverFcmToken
+        }
+    },
+
+    isAck() {
+        return this.responseType === "ack";
+    },
+
+    isNack() {
+        return this.responseType === "nack";
+    }
+}
+
+var ChatMessage = {
+
+    constructor(jsonPayload) {
+        /*_ is the xml2js prefix used to access the character content*/
+        var chatData = JSON.parse(jsonPayload._);
+        this.chatMessage = chatData.data.message;
+        this.chatReceiverUid = chatData.data.receiverUid;
+        this.chatSenderUid = chatData.data.senderUid;
+        this.chatSenderFcmToken = chatData.from;
+        this.chatMessageId = chatData.message_id;
+
+        return this;
+    },
+
+    errorPayloadToSend() {
+
+        return {
+
+            message_id: this.chatMessageId,
+            data: {
+                refMsg: this.chatMessageId,
+                messageType: MSG_TYPES_ERROR,
+                message: "This user does not exist",
+                senderUid: this.chatSenderUid,
+                receiverUid: this.chatReceiverUid
+            },
+            to: this.chatSenderFcmToken
+        }
+    },
+
+    payloadToSend(receiverFcmToken) {
+
+        return {
+            
+            message_id: this.chatMessageId,
+            data: {
+                refMsg: this.chatMessageId,
+                messageType: MSG_TYPES_MESSAGE,
+                message: this.chatMessage,
+                senderUid: this.chatSenderUid,
+                receiverUid: this.chatReceiverUid
+            },
+            to: receiverFcmToken
+        }
+    }
+}
+
 var parser = new xml2js.Parser();
 var xmppClient;
 var users;
@@ -64,7 +152,7 @@ function parseStanza(stanza) {
                 /*the gcm property is a sequence of objects read from the gcm tag of stanza.
                 We expect a single Object*/
                 jsonPayloadReceived = result.message.gcm[0];
-                var chat = new ChatMessage(jsonPayloadReceived);
+                var chat = ChatMessage.constructor(jsonPayloadReceived);
                 msgCache.cacheMessage(chat.chatMessageId, chat.chatReceiverUid, chat.chatSenderUid);
                 resultHandler(null, chat);
 
@@ -74,7 +162,7 @@ function parseStanza(stanza) {
                 We expect a single Object*/
                 jsonPayloadReceived = result.message["data:gcm"][0];
                 console.log(jsonPayloadReceived);
-                var fcmResponse = new FcmResponseMessage(jsonPayloadReceived);
+                var fcmResponse = FcmResponseMessage.constructor(jsonPayloadReceived);
                 if (fcmResponse.isAck() && msgCache.isCached(fcmResponse.messageId)) {
 
                     var msgMetadata = msgCache.getMetadata(fcmResponse.messageId);
@@ -138,7 +226,7 @@ function isRecipientValid(receiverUid) {
  * @param {ChatMessage} chatMessage 
  */
 function sendAck(chatMessage) {
-    var ack = new AckMessage(chatMessage.chatSenderFcmToken, chatMessage.chatMessageId);
+    var ack = AckMessage.constructor(chatMessage.chatSenderFcmToken, chatMessage.chatMessageId);
     var stanza = createStanzaToSend(ack);
     xmppClient.send(stanza);
 
@@ -170,87 +258,5 @@ function relayMessageToDestination(chatMessage) {
 
 
 
-class AckMessage {
-    constructor(regId, messageId) {
-        this.to = regId;
-        this.message_id = messageId;
-        this.message_type = "ack"
-    }
-}
 
-class FcmResponseMessage {
-    constructor(jsonPayload) {
-        /*_ is the xml2js prefix used to access the character content*/
-        var response = JSON.parse(jsonPayload._);
-        this.responseType = response.message_type;
-        this.messageId = response.message_id;
-    }
-
-    serverReceiptPayload(receiverFcmToken, senderUid, receiverUid) {
-
-        return {
-            message_id: this.messageId,
-            data: {
-                messageType: MSG_TYPES_RECEIPT,
-                refMsg: this.messageId,
-                senderUid: senderUid,
-                recipientUid: receiverUid
-            },
-            to: receiverFcmToken
-        }
-    }
-
-    isAck() {
-        return this.responseType === "ack";
-    }
-
-    isNack() {
-        return this.responseType === "nack";
-    }
-}
-
-class ChatMessage {
-
-    constructor(jsonPayload) {
-        /*_ is the xml2js prefix used to access the character content*/
-        var chatData = JSON.parse(jsonPayload._);
-        this.chatMessage = chatData.data.message;
-        this.chatReceiverUid = chatData.data.receiverUid;
-        this.chatSenderUid = chatData.data.senderUid;
-        this.chatSenderFcmToken = chatData.from;
-        this.chatMessageId = chatData.message_id;
-    }
-
-    errorPayloadToSend() {
-
-        return {
-
-            message_id: this.chatMessageId,
-            data: {
-                refMsg: this.chatMessageId,
-                messageType: MSG_TYPES_ERROR,
-                message: "This user does not exist",
-                senderUid: this.chatSenderUid,
-                receiverUid: this.chatReceiverUid
-            },
-            to: this.chatSenderFcmToken
-        }
-    }
-
-    payloadToSend(receiverFcmToken) {
-
-        return {
-            
-            message_id: this.chatMessageId,
-            data: {
-                refMsg: this.chatMessageId,
-                messageType: MSG_TYPES_MESSAGE,
-                message: this.chatMessage,
-                senderUid: this.chatSenderUid,
-                receiverUid: this.chatReceiverUid
-            },
-            to: receiverFcmToken
-        }
-    }
-}
 

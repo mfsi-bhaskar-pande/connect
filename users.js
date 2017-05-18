@@ -1,6 +1,23 @@
 
 var chatUsers = {};
 
+var User = {
+
+    constructor(userIdentifier, fcmToken, password){
+        this.userId = userIdentifier;
+        this.fcmToken = fcmToken;
+        this.password = password;
+
+        return this;
+    },
+
+    getUserDetailToSend(){
+        return {
+            userId: this.userId
+        }
+    }
+}
+
 /**
  * Adds a user to the list of Users registered with this server.
  * @param {String} fcmToken uniquely identifies the device to fcm.
@@ -9,7 +26,7 @@ var chatUsers = {};
  */
 exports.addUser = function(fcmToken,userId, password){
 
-    chatUsers[userId] = new ChatUser(userId, fcmToken, password);
+    chatUsers[userId] = User.constructor(userId, fcmToken, password);
 
 }
 
@@ -54,23 +71,6 @@ function getAllUsersAsJson(){
  * returns the fcmToken known for the given deviceId
  * @param {String} userId a unique identifier for a user.
  */
-exports.fetchFcmToken = function(userId){
-    
+exports.fetchFcmToken = function(userId){    
     return chatUsers[userId].fcmToken;
-
-}
-
-
-class ChatUser{
-    constructor(userIdentifier, fcmToken, password){
-        this.userId = userIdentifier;
-        this.fcmToken = fcmToken;
-        this.password = password;
-    }
-
-    getUserDetailToSend(){
-        return {
-            userId: this.userId
-        }
-    }
 }

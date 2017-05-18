@@ -1,5 +1,13 @@
 var messages = {};
 
+MessageMetadata = {
+
+    constructor(receiverUid, senderUid) {
+        this.receiverUid = receiverUid;
+        this.senderUid = senderUid;
+    }
+}
+
 exports.cacheMessage = addMessage;
 exports.clearMessage = removeMessage;
 exports.getMetadata = getMessageMetadata;
@@ -14,7 +22,7 @@ exports.isCached = isMessagePresent;
      */
     function addMessage(messageId, receiverUid, senderUid) {
 
-        var msgMetadata = new MessageMetadata(receiverUid, senderUid);
+        var msgMetadata = MessageMetadata.constructor(receiverUid, senderUid);
         messages[messageId] = msgMetadata;
 
     }
@@ -49,10 +57,3 @@ function removeMessage(messageId) {
 
 }
 
-class MessageMetadata {
-
-    constructor(receiverUid, senderUid) {
-        this.receiverUid = receiverUid;
-        this.senderUid = senderUid;
-    }
-}
