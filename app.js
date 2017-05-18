@@ -1,7 +1,3 @@
-console.log("api key: "+process.env.API_KEY);
-console.log("sender id: "+process.env.SENDER_ID);
-
-
 var http = require("http");
 var express = require("express");
 var path = require("path");
