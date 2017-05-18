@@ -6,7 +6,7 @@ var params = require("./parameters");
 var endPoints = require("./endpoints");
 var users = require("./users");
 var responseSender = require("./responseSender");
-var fcmXmpp = require("./fcmxmpp");
+//var fcmXmpp = require("./fcmxmpp");
 
 var app = express();
 
@@ -106,6 +106,6 @@ app.post(endPoints.updateFcmToken, function (request, response) {
 
 http.createServer(app).listen(app.get("port"), function () {
     console.log("Server Listening at : " + app.get("port"));
-    fcmXmpp.initialize(users);
+    //fcmXmpp.initialize(users);
 });
 
