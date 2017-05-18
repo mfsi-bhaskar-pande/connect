@@ -3,8 +3,8 @@ var xml2js = require("xml2js");
 var msgCache = require("./messagesCache");
 var keys = require("./keys");
 
-var SENDER_ID = keys.SENDER_ID;
-var API_KEY = keys.API_KEY;
+var SENDER_ID = process.env.SENDER_ID || keys.SENDER_ID;
+var API_KEY = process.env.API_KEY || keys.API_KEY;
 
 var parser = new xml2js.Parser();
 var xmppClient;
