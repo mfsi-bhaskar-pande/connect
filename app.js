@@ -12,8 +12,8 @@ var app = express();
 
 
 /*Set the IP and port*/
-app.set("port", 8080);
-app.set("ip", "0.0.0.0");
+app.set("port", process.env.PORT || process.env.OPENSHIFT_NODEJS_PORT || 8080);
+app.set("ip", process.env.IP   || process.env.OPENSHIFT_NODEJS_IP || "0.0.0.0");
 
 /*Set the location of html Pages*/
 //app.use(express.static(path.join(__dirname,"/View")));
