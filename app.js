@@ -6,7 +6,7 @@ var params = require("./parameters");
 var endPoints = require("./endPoints");
 var users = require("./users");
 var responseSender = require("./responseSender");
-var fcmXmpp = require("./fcmxmpp");
+//var fcmXmpp = require("./fcmxmpp");
 
 var app = express();
 
@@ -26,86 +26,86 @@ app.get("/", function (request, response) {
     response.sendFile("quotes.html", { "root": "View" });
 });
 
-/**
- * list all users 
- */
-app.get(endPoints.listAllUsers, function (request, response) {
+// /**
+//  * list all users 
+//  */
+// app.get(endPoints.listAllUsers, function (request, response) {
 
-    console.log("request: " + endPoints.listAllUsers + " :" + request);
-    var usersJson = users.getAllAsJson();
-    responseSender.sendAsJson(response, usersJson);
+//     console.log("request: " + endPoints.listAllUsers + " :" + request);
+//     var usersJson = users.getAllAsJson();
+//     responseSender.sendAsJson(response, usersJson);
     
-});
+// });
 
-/**
- * User Login
- */
-app.post(endPoints.loginUser, function (request, response) {
+// /**
+//  * User Login
+//  */
+// app.post(endPoints.loginUser, function (request, response) {
 
-    var userId = request.body[params.userId];
-    var password = request.body[params.password];
+//     var userId = request.body[params.userId];
+//     var password = request.body[params.password];
 
-    if (users.isUserValid(userId)) {
-        var present = users.isUserPasswordCorrect(userId, password);
-        if (present) {
-            responseSender.notifySuccess(response, { "result": "success" });
-        } else {
-            responseSender.notifyBadRequest(response, { "result": "incorrect password" });
-        }
-    } else {
-        responseSender.notifyBadRequest(response, { "result": "user not present" });
-    }
+//     if (users.isUserValid(userId)) {
+//         var present = users.isUserPasswordCorrect(userId, password);
+//         if (present) {
+//             responseSender.notifySuccess(response, { "result": "success" });
+//         } else {
+//             responseSender.notifyBadRequest(response, { "result": "incorrect password" });
+//         }
+//     } else {
+//         responseSender.notifyBadRequest(response, { "result": "user not present" });
+//     }
 
-});
+// });
 
-/**
- * Registers User
- */
-app.post(endPoints.registerUser, function (request, response) {
+// /**
+//  * Registers User
+//  */
+// app.post(endPoints.registerUser, function (request, response) {
 
-    console.log("request: " + endPoints.registerUser + " :" + request)
+//     console.log("request: " + endPoints.registerUser + " :" + request)
 
-    var userId = request.body[params.userId];
-    var fcmToken = request.body[params.fcmToken];
-    var password = request.body[params.password];
+//     var userId = request.body[params.userId];
+//     var fcmToken = request.body[params.fcmToken];
+//     var password = request.body[params.password];
 
-    if (userId && fcmToken && password) {
-        if (!users.userExists(userId)) {
-            users.addUser(fcmToken, userId);
-            responseSender.notifySuccess(response, { "result": "success" });
-        } else {
-            responseSender.notifyBadRequest(response, { "result": "User already exists" });
-        }
-    } else {
-        responseSender.notifyBadRequest(response, { "result": "Invalid Parameters" });
-    }
+//     if (userId && fcmToken && password) {
+//         if (!users.userExists(userId)) {
+//             users.addUser(fcmToken, userId);
+//             responseSender.notifySuccess(response, { "result": "success" });
+//         } else {
+//             responseSender.notifyBadRequest(response, { "result": "User already exists" });
+//         }
+//     } else {
+//         responseSender.notifyBadRequest(response, { "result": "Invalid Parameters" });
+//     }
 
-});
+// });
 
-/** 
- * Updates Fcm Token
- */
-app.post(endPoints.updateFcmToken, function (request, response) {
+// /** 
+//  * Updates Fcm Token
+//  */
+// app.post(endPoints.updateFcmToken, function (request, response) {
 
-    console.log("request: " + endPoints.updateFcmToken + " :" + request)
+//     console.log("request: " + endPoints.updateFcmToken + " :" + request)
 
-    var userId = request.body[params.userId];
-    var fcmToken = request.body[params.fcmToken];
+//     var userId = request.body[params.userId];
+//     var fcmToken = request.body[params.fcmToken];
 
-    /** @todo Later REMOVE the #addUser and include isUserValid*/
-    if (userId && fcmToken && users.isUserValid(userId)) {
-        users.updateToken(fcmToken, userId);
-        responseSender.notifySuccess(response, { "result": "success" });
-    } else {
-        responseSender.notifyBadRequest(response, { "result": "Invalid Parameters" });
-    }
+//     /** @todo Later REMOVE the #addUser and include isUserValid*/
+//     if (userId && fcmToken && users.isUserValid(userId)) {
+//         users.updateToken(fcmToken, userId);
+//         responseSender.notifySuccess(response, { "result": "success" });
+//     } else {
+//         responseSender.notifyBadRequest(response, { "result": "Invalid Parameters" });
+//     }
 
-});
+// });
 
 
 
 http.createServer(app).listen(app.get("port"), function () {
     console.log("Server Listening at : " + app.get("port"));
-    fcmXmpp.initialize(users);
+   // fcmXmpp.initialize(users);
 });
 
