@@ -1,7 +1,7 @@
 var xmpp = require("node-xmpp");
 var xml2js = require("xml2js");
 var msgCache = require("./messagesCache");
-var keys = require("./keys");
+var keys = (process.env.SENDER_ID && process.env.API_KEY) ? null : require("./keys");
 
 var SENDER_ID = process.env.SENDER_ID || keys.SENDER_ID;
 var API_KEY = process.env.API_KEY || keys.API_KEY;
@@ -80,7 +80,7 @@ var ChatMessage = {
     payloadToSend(receiverFcmToken) {
 
         return {
-            
+
             message_id: this.chatMessageId,
             data: {
                 refMsg: this.chatMessageId,
@@ -171,7 +171,7 @@ function parseStanza(stanza) {
                         msgMetadata.receiverUid);
                     var stanza = createStanzaToSend(payload);
                     xmppClient.send(stanza);
-                    msgCache.clearMessage(fcmResponse.messageId);    
+                    msgCache.clearMessage(fcmResponse.messageId);
 
                 } else if (fcmResponse.isNack()) {
 
@@ -179,7 +179,7 @@ function parseStanza(stanza) {
 
             }
 
-            
+
 
         } else {
             resultHandler(error, null);
