@@ -1,20 +1,16 @@
 
 var chatUsers = {};
 
-var User = {
+function User(userIdentifier, fcmToken, password) {
 
-    constructor(userIdentifier, fcmToken, password){
-        this.userId = userIdentifier;
-        this.fcmToken = fcmToken;
-        this.password = password;
+    this.userId = userIdentifier;
+    this.fcmToken = fcmToken;
+    this.password = password;
+}
 
-        return this;
-    },
-
-    getUserDetailToSend(){
-        return {
-            userId: this.userId
-        }
+User.prototype.getUserDetailToSend = function () {
+    return {
+        userId: this.userId
     }
 }
 
@@ -24,27 +20,27 @@ var User = {
  * @param {String} userId uniquely identifies the user.
  * @param {String} password user password.
  */
-exports.addUser = function(fcmToken,userId, password){
+exports.addUser = function (fcmToken, userId, password) {
 
-    chatUsers[userId] = User.constructor(userId, fcmToken, password);
+    chatUsers[userId] = new User(userId, fcmToken, password);
 
 }
 
 
-exports.updateToken = function(fcmToken, userId){
+exports.updateToken = function (fcmToken, userId) {
     chatUsers[userId].fcmToken = fcmToken;
 }
 
-exports.isUserValid = function(userId){
-     return chatUsers[userId] !== undefined;
+exports.isUserValid = function (userId) {
+    return chatUsers[userId] !== undefined;
 }
 
-exports.isUserPasswordCorrect = function(userId, password){
+exports.isUserPasswordCorrect = function (userId, password) {
     return chatUsers[userId].password === password;
 }
 
-exports.userExists = function(userId){
-     return chatUsers[userId] !== undefined;
+exports.userExists = function (userId) {
+    return chatUsers[userId] !== undefined;
 }
 
 exports.getAllAsJson = getAllUsersAsJson;
@@ -52,13 +48,13 @@ exports.getAllAsJson = getAllUsersAsJson;
 /**
  * Gets All Registered Users As Json.
  */
-function getAllUsersAsJson(){
+function getAllUsersAsJson() {
 
     var users = [];
     for (var property in chatUsers) {
         if (chatUsers.hasOwnProperty(property)) {
             var chatUser = chatUsers[property];
-            users.push(chatUser.getUserDetailToSend());          
+            users.push(chatUser.getUserDetailToSend());
         }
     }
     return JSON.stringify(users);
@@ -71,6 +67,6 @@ function getAllUsersAsJson(){
  * returns the fcmToken known for the given deviceId
  * @param {String} userId a unique identifier for a user.
  */
-exports.fetchFcmToken = function(userId){    
+exports.fetchFcmToken = function (userId) {
     return chatUsers[userId].fcmToken;
 }

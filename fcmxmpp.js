@@ -2,53 +2,46 @@ var xmpp = require("node-xmpp");
 var xml2js = require("xml2js");
 var msgCache = require("./messagesCache");
 
-var SENDER_ID = process.env.SENDER_ID;
-var API_KEY = process.env.API_KEY;
+var keys = process.env.SENDER_ID ? null : require("./fcmkeys");
 
-var AckMessage = {
-    constructor(regId, messageId) {
-        this.to = regId;
-        this.message_id = messageId;
-        this.message_type = "ack"
-        return this;
+var SENDER_ID = process.env.SENDER_ID || keys.SENDER_ID;
+var API_KEY = process.env.API_KEY || keys.API_KEY;
+
+function AckMessage(regId, messageId) {
+    this.to = regId;
+    this.message_id = messageId;
+    this.message_type = "ack"
+}
+
+function FcmResponseMessage(jsonPayload) {
+    /*_ is the xml2js prefix used to access the character content*/
+    var response = JSON.parse(jsonPayload._);
+    this.responseType = response.message_type;
+    this.messageId = response.message_id;
+}
+
+FcmResponseMessage.prototype.serverReceiptPayload = function(receiverFcmToken, senderUid, receiverUid) {
+    return {
+        message_id: this.messageId,
+        data: {
+            messageType: MSG_TYPES_RECEIPT,
+            refMsg: this.messageId,
+            senderUid: senderUid,
+            recipientUid: receiverUid
+        },
+        to: receiverFcmToken
     }
 }
 
-var FcmResponseMessage = {
-    constructor(jsonPayload) {
-        /*_ is the xml2js prefix used to access the character content*/
-        var response = JSON.parse(jsonPayload._);
-        this.responseType = response.message_type;
-        this.messageId = response.message_id;
-        return this;
-    },
-
-    serverReceiptPayload(receiverFcmToken, senderUid, receiverUid) {
-
-        return {
-            message_id: this.messageId,
-            data: {
-                messageType: MSG_TYPES_RECEIPT,
-                refMsg: this.messageId,
-                senderUid: senderUid,
-                recipientUid: receiverUid
-            },
-            to: receiverFcmToken
-        }
-    },
-
-    isAck() {
-        return this.responseType === "ack";
-    },
-
-    isNack() {
-        return this.responseType === "nack";
-    }
+FcmResponseMessage.prototype.isAck = function() {
+    return this.responseType === "ack";
 }
 
-var ChatMessage = {
+FcmResponseMessage.prototype.isNack = function() {
+    return this.responseType === "nack";
+}
 
-    constructor(jsonPayload) {
+function ChatMessage(jsonPayload) {
         /*_ is the xml2js prefix used to access the character content*/
         var chatData = JSON.parse(jsonPayload._);
         this.chatMessage = chatData.data.message;
@@ -56,11 +49,9 @@ var ChatMessage = {
         this.chatSenderUid = chatData.data.senderUid;
         this.chatSenderFcmToken = chatData.from;
         this.chatMessageId = chatData.message_id;
+    }
 
-        return this;
-    },
-
-    errorPayloadToSend() {
+ ChatMessage.prototype.errorPayloadToSend = function() {
 
         return {
 
@@ -74,9 +65,9 @@ var ChatMessage = {
             },
             to: this.chatSenderFcmToken
         }
-    },
+    }
 
-    payloadToSend(receiverFcmToken) {
+ ChatMessage.prototype.payloadToSend = function (receiverFcmToken) {
 
         return {
 
@@ -91,7 +82,7 @@ var ChatMessage = {
             to: receiverFcmToken
         }
     }
-}
+
 
 var parser = new xml2js.Parser();
 var xmppClient;
@@ -151,7 +142,7 @@ function parseStanza(stanza) {
                 /*the gcm property is a sequence of objects read from the gcm tag of stanza.
                 We expect a single Object*/
                 jsonPayloadReceived = result.message.gcm[0];
-                var chat = ChatMessage.constructor(jsonPayloadReceived);
+                var chat = new ChatMessage(jsonPayloadReceived);
                 msgCache.cacheMessage(chat.chatMessageId, chat.chatReceiverUid, chat.chatSenderUid);
                 resultHandler(null, chat);
 
@@ -161,7 +152,7 @@ function parseStanza(stanza) {
                 We expect a single Object*/
                 jsonPayloadReceived = result.message["data:gcm"][0];
                 console.log(jsonPayloadReceived);
-                var fcmResponse = FcmResponseMessage.constructor(jsonPayloadReceived);
+                var fcmResponse = new FcmResponseMessage(jsonPayloadReceived);
                 if (fcmResponse.isAck() && msgCache.isCached(fcmResponse.messageId)) {
 
                     var msgMetadata = msgCache.getMetadata(fcmResponse.messageId);
@@ -225,7 +216,7 @@ function isRecipientValid(receiverUid) {
  * @param {ChatMessage} chatMessage 
  */
 function sendAck(chatMessage) {
-    var ack = AckMessage.constructor(chatMessage.chatSenderFcmToken, chatMessage.chatMessageId);
+    var ack = new AckMessage(chatMessage.chatSenderFcmToken, chatMessage.chatMessageId);
     var stanza = createStanzaToSend(ack);
     xmppClient.send(stanza);
 
