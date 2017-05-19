@@ -49,6 +49,8 @@ function ChatMessage(jsonPayload) {
         this.chatSenderUid = chatData.data.senderUid;
         this.chatSenderFcmToken = chatData.from;
         this.chatMessageId = chatData.message_id;
+
+        console.log("MESSAGE:"+ this.chatMessage);
     }
 
  ChatMessage.prototype.errorPayloadToSend = function() {
